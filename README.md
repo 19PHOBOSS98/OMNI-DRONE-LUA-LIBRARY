@@ -80,7 +80,7 @@ Some cool stuff about the library that I think is worth mentioning:
          - PID controllers would usually be enough to control rotation by themselves, but setting the gains too often gets repetitive whenever the player changes the aircrafts form and weight distribution either while building or in combat. Though, unrealistic in the real world, including the complete unsymetrical inertia tensor in the control loop's plant model made it possible for the aircraft to adapt to structural changes in real time:
          <div align="center">
             </br>
-            (The pictures are linked to videos, click on'm!)
+            (The picture is linked to a video, click on it!)
             </br>
             <a href="https://youtu.be/Kqf0vo2cnQA?si=FZWUhKSWGSw9sOlh"><img src="https://github.com/user-attachments/assets/0d73e731-f94c-417a-93f8-48bfdaf2e32e" width=500></a>
          </div>
