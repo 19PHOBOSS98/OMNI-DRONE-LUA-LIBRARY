@@ -96,6 +96,17 @@ function DroneBaseClassSP:calculateFeedbackControlValues(error)--return rotation
 			}),
 			self.pos_PID:run(error.position_error)
 end
+
+function DroneBaseClassSP:getThrusterList()--override to manually listdown VS Tournament thrusters here
+	return vst_components.get_thrusters()
+	-- return {
+	-- 	{pos={x=0,y=0,z=0},force={x=0,y=0,z=0}},
+	-- 	{pos={x=0,y=0,z=0},force={x=0,y=0,z=0}},
+	-- 	{pos={x=0,y=0,z=0},force={x=0,y=0,z=0}},
+	--  ...
+	-- }
+end
+
 --OVERRIDABLE FUNCTIONS--
 
 function DroneBaseClassSP:initSensors(configs)
@@ -131,24 +142,28 @@ function DroneBaseClassSP:getThrusterTable()
 	self:powerThrusters(1)
 	os.sleep(1)
 	
-	local thrusters = vst_components.get_thrusters()
+	local thrusters = self:getThrusterList()
 	self:powerThrusters(0)
 
 	local thruster_table = {}
 
+	local thruster_mod_position_offset = vector.new(0.5,0.5,0.5) -- tournament 1.1.0 beta 4.1 has the thruster pos value off by 0.5
+	if(string.find(_HOST,"Minecraft 1.20.1")) then
+        thruster_mod_position_offset = vector.new(0,0,0)
+    end
+	
 	for i,thruster in pairs(thrusters) do
 		
-		local radius = vector.new(thruster.pos.x,thruster.pos.y,thruster.pos.z) - vector.new(0.5,0.5,0.5) -- tournament 1.1.0 beta 4.1 has the thruster pos value off by 0.5
+		local radius = vector.new(thruster.pos.x,thruster.pos.y,thruster.pos.z) - thruster_mod_position_offset
 		
 		local force = vector.new(thruster.force.x,thruster.force.y,thruster.force.z)
 		local direction = force:normalize()
-		
+		--print(textutils.serialise({direction=direction,radius=radius,base_force=force:length()}))
 		thruster_table[1+#thruster_table] = {direction=direction,radius=radius,base_force=force:length()}
-		
 	end
 
 	-- local h = fs.open("./input_thruster_table/RAW_thruster_table.json","w")
-	-- h.writeLine(JSON:encode_pretty(thruster_table))
+	-- h.writeLine(textutils.serialise(thruster_table))
 	-- h.flush()
 	-- h.close()
 
@@ -236,7 +251,7 @@ function DroneBaseClassSP:initFlightConstants()
 	local JACOBIAN_TRANSPOSE = matrix(self:buildJacobianTranspose(thruster_table))
 
 	local inverse_new_default_ship_orientation = self.ship_constants.DEFAULT_NEW_LOCAL_SHIP_ORIENTATION:inv()
-
+	
 	local max_linear_acceleration = {pos=vector.new(0,0,0),neg=vector.new(0,0,0)}
 	local max_angular_acceleration = {pos=vector.new(0,0,0),neg=vector.new(0,0,0)}
 
@@ -344,7 +359,7 @@ function DroneBaseClassSP:calculateMovement()
 		self.ship_global_velocity = vector.new(self.ship_global_velocity.x,self.ship_global_velocity.y,self.ship_global_velocity.z)
 
 		local error = self:calculateFeedbackControlValueError()
-		--self:debugProbe({error=error})
+		self:debugProbe({error=error})
 		local pid_output_angular_acceleration,pid_output_linear_acceleration = self:calculateFeedbackControlValues(error)
 		local net_torque = matrix.mul(self.ship_constants.LOCAL_INERTIA_TENSOR,pid_output_angular_acceleration)
 		
@@ -373,9 +388,10 @@ function DroneBaseClassSP:calculateMovement()
 			{max(0,net_torque[3][1])},
 			{abs(min(0,net_torque[3][1]))}
 		})
-
+		
 		local thruster_redstone_power = matrix.mul(self.JACOBIAN_TRANSPOSE,net)
-
+		--self:debugProbe({net_force=net_force,net_torque=net_torque})
+		--self:debugProbe({thruster_redstone_power=thruster_redstone_power})
 		self:applyRedStonePower(thruster_redstone_power)
 		sleep(self.min_time_step)
 	end
