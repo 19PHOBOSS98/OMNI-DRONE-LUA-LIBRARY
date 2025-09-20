@@ -91,7 +91,7 @@ end
 function RemoteControlManager:init(configs)--
 	
 	self.DRONE_ID = configs.ship_constants_config.DRONE_ID
-	self.DRONE_TYPE = configs.ship_constants_config.DRONE_TYPE
+	self.DRONE_TYPE = configs.ship_constants_config.DRONE_TYPE or "DEFAULT"
 	self.DRONE_TO_REMOTE_CHANNEL = configs.channels_config.DRONE_TO_REMOTE_CHANNEL
 	self.REPLY_DUMP_CHANNEL = configs.channels_config.REPLY_DUMP_CHANNEL
 	self.modem = configs.modem
